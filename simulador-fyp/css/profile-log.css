@@ -1,0 +1,135 @@
+/* ═══════════════════════════════════════════════════
+   PERFIL DO USUÁRIO
+   ═══════════════════════════════════════════════════ */
+
+.pro-sec {
+  padding: 0 28px 14px;
+}
+
+.pro-panel {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 16px 18px;
+}
+
+.pro-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.pro-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.pro-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.int-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .int-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.int-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.int-nm {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.int-pct {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.int-trk {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.int-fil {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ═══════════════════════════════════════════════════
+   LOG DO ALGORITMO
+   ═══════════════════════════════════════════════════ */
+
+/* .log-sec { padding: 0 2px 2px; } */
+
+.log-pan {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 11px 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  height: 97vh;
+  /* max-height: 112px; */
+  overflow-y: auto;
+  line-height: 1.9;
+}
+
+.offcanvas-body {
+  background: var(--bg);
+}
+
+.log-line {
+  animation: lf 0.25s ease;
+}
+
+@keyframes lf {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Classes de cor para o log */
+.lc {
+  color: var(--cyan);
+}
+
+.lp {
+  color: var(--pink);
+}
+
+.lg {
+  color: var(--green);
+}
+
+.lo {
+  color: var(--gold);
+}
+
+.lm {
+  color: var(--muted);
+}

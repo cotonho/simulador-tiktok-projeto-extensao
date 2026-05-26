@@ -1,0 +1,46 @@
+/* ═══════════════════════════════════════════════════
+   VARIÁVEIS GLOBAIS & RESET
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  --bg:     #08080f;
+  --s1:     #101020;
+  --s2:     #14142a;
+  --border: rgba(255,255,255,0.08);
+  --text:   #f0f0f5;
+  --muted:  #6e6e90;
+  --cyan:   #00e5cc;
+  --pink:   #ff2d55;
+  --gold:   #ffd60a;
+  --green:  #32d74b;
+  --orange: #ff9f0a;
+  --blue:   #0a84ff;
+  --purple: #bf5af2;
+  --mono:   'Space Mono', monospace;
+  --body:   'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 14px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Scrollbar global */
+::-webkit-scrollbar       { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.top-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}

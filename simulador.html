@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador FYP — Algoritmo TikTok</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #08080f;
+  --s1: #101020;
+  --s2: #14142a;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0f0f5;
+  --muted: #6e6e90;
+  --cyan: #00e5cc;
+  --pink: #ff2d55;
+  --gold: #ffd60a;
+  --green: #32d74b;
+  --orange: #ff9f0a;
+  --blue: #0a84ff;
+  --purple: #bf5af2;
+  --mono: 'Space Mono', monospace;
+  --body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; }
+
+/* HEADER */
+.hdr {
+  background: #0c0c1c;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.brand-text h1 {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--cyan), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.brand-text p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.hdr-btns { display: flex; gap: 8px; align-items: center; }
+.btn {
+  border: none; border-radius: 20px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  cursor: pointer; padding: 8px 18px;
+  transition: all 0.18s; letter-spacing: 0.3px;
+}
+.btn-ghost { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.btn-sec { background: rgba(0,229,204,0.1); color: var(--cyan); border: 1px solid rgba(0,229,204,0.25); display: none; }
+.btn-sec.show { display: block; }
+.btn-sec:hover { background: rgba(0,229,204,0.18); }
+.btn-run { background: var(--cyan); color: #000; }
+.btn-run:hover { background: #00cfba; transform: scale(1.02); }
+.btn-run:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* STEP BAR */
+.steps {
+  display: flex;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.step {
+  flex: 1; min-width: 170px;
+  padding: 11px 18px;
+  border-right: 1px solid var(--border);
+  opacity: 0.28;
+  transition: all 0.4s;
+  position: relative;
+}
+.step:last-child { border-right: none; }
+.step::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--cyan);
+  transform: scaleX(0);
+  transition: transform 0.4s;
+}
+.step.active { opacity: 1; background: rgba(0,229,204,0.04); }
+.step.active::after { transform: scaleX(1); }
+.step.done { opacity: 0.55; }
+.step.done::after { transform: scaleX(1); background: rgba(0,229,204,0.3); }
+.step-num { font-family: var(--mono); font-size: 9px; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+.step-ttl { font-size: 12px; font-weight: 600; margin-bottom: 1px; }
+.step-dsc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+/* MAIN GRID */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  padding: 16px 28px;
+}
+@media (max-width: 1100px) { .main { grid-template-columns: 1fr; } }
+
+/* PANEL */
+.panel {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.panel-hdr {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-lbl { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.panel-cnt { font-family: var(--mono); font-size: 10px; color: var(--cyan); }
+.panel-body { padding: 10px; overflow-y: auto; flex: 1; max-height: 490px; }
+
+/* VIDEO GRID */
+.vgrid { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
+.vchip {
+  border-radius: 6px; padding: 7px 5px; text-align: center;
+  transition: all 0.5s; position: relative;
+  border: 1px solid transparent; cursor: help;
+}
+.vchip.dim { opacity: 0.09; filter: grayscale(0.9); }
+.vchip.hi  { border-color: rgba(255,255,255,0.18); }
+.vchip .icon { font-size: 14px; display: block; margin-bottom: 2px; }
+.vchip .vtit { font-size: 8px; color: rgba(255,255,255,0.72); line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.vchip .vseen { font-size: 7px; color: rgba(255,255,255,0.28); margin-top: 2px; }
+
+/* CATEGORY LEGEND */
+.cat-leg { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.cat-pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid; }
+
+/* CANDIDATE LIST */
+.clist { display: flex; flex-direction: column; gap: 7px; }
+.ccard {
+  background: var(--s2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 11px; display: flex; align-items: center; gap: 9px;
+  animation: slIn 0.3s ease both;
+}
+@keyframes slIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+.ccard .icon { font-size: 18px; flex-shrink: 0; }
+.cinfo { flex:1; min-width:0; }
+.ctit { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmeta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.swrap { flex-shrink: 0; width: 64px; }
+.snum { font-family: var(--mono); font-size: 10px; color: var(--cyan); text-align: right; margin-bottom: 2px; }
+.strk { height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.sfil { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+
+/* FEED */
+.flist { display: flex; flex-direction: column; gap: 9px; }
+.fcard {
+  background: var(--s2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 11px; animation: fdUp 0.4s ease both; transition: opacity 0.3s;
+}
+@keyframes fdUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.fcard.disc { border-color: rgba(255,214,10,0.3); background: rgba(255,214,10,0.03); }
+.fcard.used { opacity: 0.45; }
+.fcrd-top { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 9px; }
+.fcard .icon { font-size: 22px; flex-shrink: 0; }
+.finf { flex:1; min-width:0; }
+.ftit { font-size: 12px; font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fcrt { font-size: 10px; color: var(--muted); }
+.frt { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0; }
+.fpts { font-family: var(--mono); font-size: 10px; color: var(--cyan); }
+.fpill { font-size: 9px; padding: 1px 7px; border-radius: 8px; font-weight: 600; }
+.fpill-r { background: rgba(0,229,204,0.1); color: var(--cyan); border: 1px solid rgba(0,229,204,0.2); }
+.fpill-d { background: rgba(255,214,10,0.12); color: var(--gold); border: 1px solid rgba(255,214,10,0.25); }
+.faction { display: flex; gap: 5px; }
+.abtn {
+  flex: 1; padding: 5px;
+  border-radius: 5px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted);
+  font-size: 10px; cursor: pointer;
+  transition: all 0.15s; font-family: var(--body); font-weight: 500;
+}
+.abtn:hover { background: var(--s1); }
+.abtn.wa:hover { border-color: var(--green); color: var(--green); }
+.abtn.li:hover { border-color: var(--pink); color: var(--pink); }
+.abtn.sk:hover { border-color: var(--orange); color: var(--orange); }
+.abtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* PROFILE */
+.pro-sec { padding: 0 28px 14px; }
+.pro-panel { background: var(--s1); border: 1px solid var(--border); border-radius: 11px; padding: 16px 18px; }
+.pro-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.pro-lbl { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.pro-hint { font-size: 11px; color: var(--muted); }
+.int-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; }
+@media (max-width: 900px) { .int-grid { grid-template-columns: repeat(3,1fr); } }
+.int-lbl { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.int-nm { font-size: 11px; font-weight: 500; }
+.int-pct { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.int-trk { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.int-fil { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+/* LOG */
+.log-sec { padding: 0 28px 28px; }
+.log-pan {
+  background: var(--s1); border: 1px solid var(--border); border-radius: 11px;
+  padding: 11px 16px; font-family: var(--mono); font-size: 10px;
+  max-height: 112px; overflow-y: auto; line-height: 1.9;
+}
+.log-line { animation: lf 0.25s ease; }
+@keyframes lf { from { opacity:0; } to { opacity:1; } }
+.lc { color: var(--cyan); }
+.lp { color: var(--pink); }
+.lg { color: var(--green); }
+.lo { color: var(--gold); }
+.lm { color: var(--muted); }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 36px 16px; color: var(--muted); }
+.empty .ei { font-size: 28px; margin-bottom: 8px; }
+.empty p { font-size: 12px; line-height: 1.6; }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="brand">
+    <div class="brand-icon">⟳</div>
+    <div class="brand-text">
+      <h1>Simulador FYP — Algoritmo TikTok</h1>
+      <p>Visualize as 4 etapas que definem o que aparece no feed de cada usuário</p>
+    </div>
+  </div>
+  <div class="hdr-btns">
+    <button class="btn btn-ghost" onclick="resetUser()">↺ Novo usuário</button>
+    <button class="btn btn-sec" id="refreshBtn" onclick="runAlgorithm()">↺ Atualizar feed</button>
+    <button class="btn btn-run" id="runBtn" onclick="runAlgorithm()">▶ Gerar Feed</button>
+  </div>
+</header>
+
+<!-- STEPS BAR -->
+<div class="steps">
+  <div class="step" id="step1">
+    <div class="step-num">Etapa 1</div>
+    <div class="step-ttl">Filtragem Inicial</div>
+    <div class="step-dsc">24 vídeos → 10 candidatos relevantes</div>
+  </div>
+  <div class="step" id="step2">
+    <div class="step-num">Etapa 2</div>
+    <div class="step-ttl">Pontuação Preditiva</div>
+    <div class="step-dsc">Nota por engajamento esperado</div>
+  </div>
+  <div class="step" id="step3">
+    <div class="step-num">Etapa 3</div>
+    <div class="step-ttl">Diversificação</div>
+    <div class="step-dsc">Ordena + injeta vídeo "surpresa"</div>
+  </div>
+  <div class="step" id="step4">
+    <div class="step-num">Etapa 4</div>
+    <div class="step-ttl">Feed + Feedback</div>
+    <div class="step-dsc">Você interage → algoritmo aprende</div>
+  </div>
+</div>
+
+<!-- MAIN 3 COLUMNS -->
+<div class="main">
+  <!-- POOL -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-lbl">Pool de Vídeos</span>
+      <span class="panel-cnt" id="poolMeta">24 vídeos</span>
+    </div>
+    <div class="panel-body">
+      <div class="vgrid" id="vgrid"></div>
+    </div>
+    <div class="cat-leg" id="catLeg"></div>
+  </div>
+
+  <!-- PROCESSING -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-lbl">Processamento</span>
+      <span class="panel-cnt" id="procMeta">aguardando...</span>
+    </div>
+    <div class="panel-body" id="procPanel">
+      <div class="empty">
+        <div class="ei">⚙️</div>
+        <p>Clique em <strong>"Gerar Feed"</strong><br>para ver o algoritmo em ação</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEED -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-lbl">Feed Gerado</span>
+      <span class="panel-cnt" id="feedMeta">aguardando...</span>
+    </div>
+    <div class="panel-body" id="feedPanel">
+      <div class="empty">
+        <div class="ei">📱</div>
+        <p>Seu feed personalizado<br>aparecerá aqui</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER PROFILE -->
+<div class="pro-sec">
+  <div class="pro-panel">
+    <div class="pro-hdr">
+      <span class="pro-lbl">Perfil do Usuário — Pesos de Interesse</span>
+      <span class="pro-hint">Interaja com os vídeos → os pesos mudam em tempo real</span>
+    </div>
+    <div class="int-grid" id="intGrid"></div>
+  </div>
+</div>
+
+<!-- LOG -->
+<div class="log-sec">
+  <div class="log-pan" id="logPanel">
+    <span class="lm">// Log do algoritmo aparecerá aqui...</span>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const CATS = {
+  tech:    { label:'Tecnologia', icon:'💻', color:'#0a84ff' },
+  humor:   { label:'Humor',      icon:'😂', color:'#ff2d55' },
+  music:   { label:'Música',     icon:'🎵', color:'#ffd60a' },
+  sports:  { label:'Esportes',   icon:'⚽', color:'#32d74b' },
+  food:    { label:'Culinária',  icon:'🍕', color:'#ff9f0a' },
+  science: { label:'Ciência',    icon:'🔬', color:'#bf5af2' },
+};
+
+const VIDEOS = [
+  {id:1, title:'Como a IA funciona',         cat:'tech',    cr:0.78, lr:0.12, rr:0.22, creator:'TechBrasil'},
+  {id:2, title:'Python em 5 minutos',        cat:'tech',    cr:0.82, lr:0.09, rr:0.18, creator:'CodeNinja'},
+  {id:3, title:'iPhone vs Android 2025',     cat:'tech',    cr:0.65, lr:0.14, rr:0.10, creator:'GadgetBr'},
+  {id:4, title:'ChatGPT: truques secretos',  cat:'tech',    cr:0.90, lr:0.20, rr:0.35, creator:'AItips'},
+  {id:5, title:'Meu gato odeia segundas',    cat:'humor',   cr:0.95, lr:0.35, rr:0.60, creator:'PetComedy'},
+  {id:6, title:'Reunião desnecessária',      cat:'humor',   cr:0.88, lr:0.28, rr:0.45, creator:'OfficeLife'},
+  {id:7, title:'Professores brasileiros',    cat:'humor',   cr:0.92, lr:0.40, rr:0.55, creator:'EscolaCaos'},
+  {id:8, title:'Compilação de fails épicos', cat:'humor',   cr:0.75, lr:0.22, rr:0.30, creator:'FailZone'},
+  {id:9, title:'Beat drop insano',           cat:'music',   cr:0.70, lr:0.18, rr:0.40, creator:'BeatMaker'},
+  {id:10,title:'Aprenda guitarra hoje',      cat:'music',   cr:0.55, lr:0.08, rr:0.15, creator:'GuitarPro'},
+  {id:11,title:'Funk que não sai da cabeça', cat:'music',   cr:0.85, lr:0.30, rr:0.65, creator:'FunkBr'},
+  {id:12,title:'Piano solo emocionante',     cat:'music',   cr:0.60, lr:0.15, rr:0.20, creator:'PianoVibe'},
+  {id:13,title:'Golaço impossível',          cat:'sports',  cr:0.92, lr:0.38, rr:0.70, creator:'FutebolBr'},
+  {id:14,title:'Treino HIIT em 10 min',      cat:'sports',  cr:0.48, lr:0.10, rr:0.12, creator:'FitBrasil'},
+  {id:15,title:'NBA Highlights da semana',   cat:'sports',  cr:0.72, lr:0.20, rr:0.30, creator:'BasqueteBr'},
+  {id:16,title:'Surf no litoral brasileiro', cat:'sports',  cr:0.80, lr:0.25, rr:0.38, creator:'SurfLife'},
+  {id:17,title:'Bolo de brigadeiro fácil',   cat:'food',    cr:0.85, lr:0.22, rr:0.28, creator:'DoceVida'},
+  {id:18,title:'Pizza caseira do zero',      cat:'food',    cr:0.78, lr:0.18, rr:0.20, creator:'ChefHome'},
+  {id:19,title:'Churrasco perfeito',         cat:'food',    cr:0.90, lr:0.32, rr:0.42, creator:'AsadorBr'},
+  {id:20,title:'Sushi em casa funciona?',    cat:'food',    cr:0.68, lr:0.15, rr:0.18, creator:'JaponêsAqui'},
+  {id:21,title:'Buracos negros explicados',  cat:'science', cr:0.72, lr:0.16, rr:0.25, creator:'AstroFísica'},
+  {id:22,title:'Por que sonhamos?',          cat:'science', cr:0.80, lr:0.19, rr:0.30, creator:'NeuroLab'},
+  {id:23,title:'Experiência com Coca-Cola',  cat:'science', cr:0.88, lr:0.28, rr:0.50, creator:'QuímicaMais'},
+  {id:24,title:'O universo em escala',       cat:'science', cr:0.65, lr:0.14, rr:0.22, creator:'CosmosTV'},
+];
+
+let user = {
+  interests: {tech:0.80, humor:0.30, music:0.50, sports:0.20, food:0.40, science:0.70},
+  history: new Set(),
+};
+
+let running = false;
+
+// ═══════════════════════════════════════════════════
+// ALGORITHM (4 STEPS)
+// ═══════════════════════════════════════════════════
+
+// STEP 1 — Collaborative filtering + history filtering
+function step1(videos, user) {
+  const eligible = videos.filter(v => !user.history.has(v.id));
+  return eligible
+    .map(v => ({
+      ...v,
+      relevance: user.interests[v.cat] * 0.65 + v.cr * 0.20 + Math.random() * 0.15
+    }))
+    .sort((a, b) => b.relevance - a.relevance)
+    .slice(0, 10);
+}
+
+// STEP 2 — Predictive engagement score
+function step2(candidates, user) {
+  return candidates
+    .map(v => {
+      const interest = user.interests[v.cat];
+      const engagement = v.cr * 0.40 + v.lr * 0.30 + v.rr * 0.30;
+      const score = Math.round((interest * 0.40 + engagement * 0.60) * 100 * 10) / 10;
+      return { ...v, score };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+// STEP 3 — Sort + diversify + inject discovery video
+function step3(scored) {
+  const feed = [];
+  const usedCats = new Set();
+
+  for (const v of scored) {
+    if (feed.length >= 5) break;
+    const last = feed[feed.length - 1];
+    if (!last || last.cat !== v.cat) {
+      feed.push(v);
+      usedCats.add(v.cat);
+    }
+  }
+
+  for (const v of scored) {
+    if (feed.length >= 5) break;
+    if (!feed.find(f => f.id === v.id)) feed.push(v);
+  }
+
+  // Discovery: lower score, ideally a different category
+  const discovery = scored.slice().reverse().find(v =>
+    !feed.find(f => f.id === v.id) && !usedCats.has(v.cat)
+  ) || scored[scored.length - 1];
+
+  if (discovery && !feed.find(f => f.id === discovery.id)) {
+    feed.push({ ...discovery, isDiscovery: true });
+  }
+
+  return feed.slice(0, 6);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════
+function renderPool(highlights = null) {
+  const avail = VIDEOS.filter(v => !user.history.has(v.id)).length;
+  document.getElementById('poolMeta').textContent =
+    `${avail} disponíveis / ${VIDEOS.length}`;
+
+  document.getElementById('vgrid').innerHTML = VIDEOS.map(v => {
+    const cat = CATS[v.cat];
+    const isDim = highlights && !highlights.includes(v.id);
+    const isHi  = highlights && highlights.includes(v.id);
+    const seen  = user.history.has(v.id);
+    return `<div class="vchip ${isDim?'dim':''} ${isHi?'hi':''}"
+      style="background:${cat.color}16;${isHi?`border-color:${cat.color}55;`:''}"
+      title="${v.title} | @${v.creator} | Completion: ${Math.round(v.cr*100)}% | Likes: ${Math.round(v.lr*100)}%">
+      <span class="icon">${cat.icon}</span>
+      <div class="vtit">${v.title}</div>
+      ${seen?'<div class="vseen">✓ visto</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function renderLegend() {
+  document.getElementById('catLeg').innerHTML = Object.entries(CATS).map(([k,c]) =>
+    `<span class="cat-pill" style="color:${c.color};border-color:${c.color}55;background:${c.color}12">
+      ${c.icon} ${c.label} ${Math.round(user.interests[k]*100)}%
+    </span>`
+  ).join('');
+}
+
+function renderCandidates(list, showScore) {
+  document.getElementById('procMeta').textContent = `${list.length} candidatos`;
+  document.getElementById('procPanel').innerHTML =
+    `<div class="clist">${list.map((v,i) => {
+      const cat = CATS[v.cat];
+      const val = showScore ? v.score.toFixed(1) + 'pts' : Math.round((v.relevance||0)*100) + '%';
+      const pct = showScore ? v.score : Math.round((v.relevance||0)*100);
+      return `<div class="ccard" style="animation-delay:${i*0.04}s;border-left:3px solid ${cat.color};">
+        <div class="icon">${cat.icon}</div>
+        <div class="cinfo">
+          <div class="ctit">${v.title}</div>
+          <div class="cmeta">@${v.creator} · ${cat.label}</div>
+        </div>
+        <div class="swrap">
+          <div class="snum">${val}</div>
+          <div class="strk"><div class="sfil" style="width:${pct}%;background:${cat.color}"></div></div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+function renderFeed(feed) {
+  document.getElementById('feedMeta').textContent = `${feed.length} vídeos`;
+  document.getElementById('feedPanel').innerHTML =
+    `<div class="flist">${feed.map((v,i) => {
+      const cat = CATS[v.cat];
+      return `<div class="fcard ${v.isDiscovery?'disc':''}" id="fc-${v.id}" style="animation-delay:${i*0.06}s;border-left:3px solid ${cat.color};">
+        <div class="fcrd-top">
+          <div class="icon">${cat.icon}</div>
+          <div class="finf">
+            <div class="ftit">${v.title}</div>
+            <div class="fcrt">@${v.creator} · ${cat.label}</div>
+          </div>
+          <div class="frt">
+            <span class="fpts">${v.score}pts</span>
+            ${v.isDiscovery
+              ? '<span class="fpill fpill-d">★ Descoberta</span>'
+              : `<span class="fpill fpill-r">#${i+1}</span>`}
+          </div>
+        </div>
+        <div class="faction">
+          <button class="abtn wa" onclick="interact(${v.id},'${v.cat}','watch',this)">✓ Assistiu</button>
+          <button class="abtn li" onclick="interact(${v.id},'${v.cat}','like',this)">♥ Curtiu</button>
+          <button class="abtn sk" onclick="interact(${v.id},'${v.cat}','skip',this)">⏭ Pulou</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+function renderInterests() {
+  document.getElementById('intGrid').innerHTML = Object.entries(user.interests).map(([k,v]) => {
+    const cat = CATS[k];
+    return `<div>
+      <div class="int-lbl">
+        <span class="int-nm">${cat.icon} ${cat.label}</span>
+        <span class="int-pct" id="ipct-${k}">${Math.round(v*100)}%</span>
+      </div>
+      <div class="int-trk">
+        <div class="int-fil" id="ibar-${k}" style="width:${v*100}%;background:${cat.color}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateInterestBar(k) {
+  const v = user.interests[k];
+  const bar = document.getElementById(`ibar-${k}`);
+  const pct = document.getElementById(`ipct-${k}`);
+  if (bar) bar.style.width = (v*100)+'%';
+  if (pct) pct.textContent = Math.round(v*100)+'%';
+  renderLegend();
+}
+
+// ═══════════════════════════════════════════════════
+// INTERACTIONS
+// ═══════════════════════════════════════════════════
+const DELTA = {watch:0.07, like:0.10, skip:-0.08};
+const ILBL  = {watch:'✓ assistiu', like:'♥ curtiu', skip:'⏭ pulou'};
+
+function interact(videoId, cat, action, btn) {
+  const card = document.getElementById(`fc-${videoId}`);
+  card.querySelectorAll('.abtn').forEach(b => b.disabled = true);
+  card.classList.add('used');
+
+  const delta = DELTA[action];
+  user.interests[cat] = Math.max(0.05, Math.min(1.0, user.interests[cat] + delta));
+  updateInterestBar(cat);
+  user.history.add(videoId);
+  renderPool();
+
+  const title = card.querySelector('.ftit').textContent;
+  const sign  = delta > 0 ? '+' : '';
+  const cls   = delta > 0 ? 'lg' : 'lp';
+  log(`<span class="${cls}">[INTERAÇÃO]</span> ${ILBL[action]} "${title}" → ${CATS[cat].label} <span class="${cls}">${sign}${Math.round(delta*100)}%</span>`);
+  document.getElementById('refreshBtn').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════
+// MAIN RUNNER
+// ═══════════════════════════════════════════════════
+async function runAlgorithm() {
+  if (running) return;
+  running = true;
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Processando...';
+  document.getElementById('refreshBtn').classList.remove('show');
+  clearLog();
+
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active','done'));
+  renderPool();
+  renderLegend();
+
+  const avail = VIDEOS.filter(v => !user.history.has(v.id)).length;
+  log(`<span class="lc">[INÍCIO]</span> Pool: <strong>${VIDEOS.length} vídeos</strong> | Histórico: <strong>${user.history.size} vistos</strong> | Elegíveis: <strong>${avail}</strong>`);
+
+  await wait(500);
+
+  // ── ETAPA 1 ──
+  setStep('step1','active');
+  log(`<span class="lc">[ETAPA 1]</span> Filtragem colaborativa — priorizando categorias de maior interesse do usuário...`);
+  await wait(700);
+
+  const candidates = step1(VIDEOS, user);
+  renderPool(candidates.map(v => v.id));
+  renderCandidates(candidates, false);
+  log(`<span class="lc">[ETAPA 1]</span> ${avail} elegíveis → <strong>${candidates.length} candidatos</strong>. Mais relevante: "${candidates[0]?.title}"`);
+
+  await wait(1500);
+  setStep('step1','done');
+
+  // ── ETAPA 2 ──
+  setStep('step2','active');
+  log(`<span class="lo">[ETAPA 2]</span> Calculando pontuação — fórmula: completion×40% + likes×30% + replays×30%...`);
+  await wait(700);
+
+  const scored = step2(candidates, user);
+  renderCandidates(scored, true);
+  log(`<span class="lo">[ETAPA 2]</span> Pontuação concluída. Líder: <strong>"${scored[0]?.title}"</strong> com ${scored[0]?.score}pts`);
+
+  await wait(1500);
+  setStep('step2','done');
+
+  // ── ETAPA 3 ──
+  setStep('step3','active');
+  log(`<span class="lp">[ETAPA 3]</span> Diversificando — evitando categorias repetidas + injetando vídeo surpresa...`);
+  await wait(700);
+
+  const feed = step3(scored);
+  const disc = feed.find(v => v.isDiscovery);
+  log(`<span class="lp">[ETAPA 3]</span> ${scored.length} candidatos → ${feed.length} vídeos no feed. Surpresa: <strong>"${disc?.title}"</strong> (${CATS[disc?.cat]?.label})`);
+
+  await wait(800);
+  setStep('step3','done');
+
+  // ── ETAPA 4 ──
+  setStep('step4','active');
+  renderFeed(feed);
+  log(`<span class="lg">[ETAPA 4]</span> Feed pronto com <strong>${feed.length} vídeos</strong>! Interaja para ver o algoritmo aprender em tempo real →`);
+  setStep('step4','done');
+
+  btn.disabled = false;
+  btn.textContent = '↺ Regenerar Feed';
+  running = false;
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function setStep(id, cls) {
+  const el = document.getElementById(id);
+  if (cls === 'active') { el.classList.add('active'); el.classList.remove('done'); }
+  if (cls === 'done')   { el.classList.remove('active'); el.classList.add('done'); }
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function log(html) {
+  const panel = document.getElementById('logPanel');
+  const time  = new Date().toLocaleTimeString('pt-BR');
+  const line  = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="lm">[${time}]</span> ${html}`;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function clearLog() { document.getElementById('logPanel').innerHTML = ''; }
+
+function resetUser() {
+  user = {
+    interests: {tech:0.80, humor:0.30, music:0.50, sports:0.20, food:0.40, science:0.70},
+    history: new Set(),
+  };
+  document.getElementById('runBtn').textContent = '▶ Gerar Feed';
+  document.getElementById('refreshBtn').classList.remove('show');
+  document.getElementById('procPanel').innerHTML = '<div class="empty"><div class="ei">⚙️</div><p>Clique em <strong>"Gerar Feed"</strong><br>para ver o algoritmo em ação</p></div>';
+  document.getElementById('feedPanel').innerHTML = '<div class="empty"><div class="ei">📱</div><p>Seu feed personalizado<br>aparecerá aqui</p></div>';
+  document.getElementById('procMeta').textContent = 'aguardando...';
+  document.getElementById('feedMeta').textContent = 'aguardando...';
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active','done'));
+  renderPool(); renderInterests(); renderLegend(); clearLog();
+  log(`<span class="lc">[SISTEMA]</span> Usuário resetado — interesses e histórico limpos.`);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+renderPool();
+renderInterests();
+renderLegend();
+log(`<span class="lc">[SISTEMA]</span> Simulador FYP carregado — ${VIDEOS.length} vídeos em 6 categorias.`);
+log(`<span class="lm">[DICA]</span> Clique em <strong>"Gerar Feed"</strong> para ver as 4 etapas. Depois interaja com os vídeos para ver o feed se adaptar!`);
+</script>
+</body>
+</html>
