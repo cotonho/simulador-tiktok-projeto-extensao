@@ -83,6 +83,7 @@
 /* .log-sec { padding: 0 2px 2px; } */
 
 .log-pan {
+  color: rgb(109, 99, 81);
   background: var(--s1);
   border: 1px solid var(--border);
   border-radius: 11px;
