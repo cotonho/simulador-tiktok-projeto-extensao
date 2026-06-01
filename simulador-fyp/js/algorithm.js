@@ -12,16 +12,36 @@
  * @param {Object} user    – estado do usuário (interests + history)
  * @returns {Array} top 10 candidatos com campo `relevance`
  */
+
 function step1(videos, user) {
   const eligible = videos.filter(v => !user.history.has(v.id));
 
-  return eligible
-    .map(v => ({
-      ...v,
-      relevance: user.interests[v.cat] * 0.65
-               + v.cr * 0.20
-               + Math.random() * 0.15,
-    }))
+  const scored = eligible.map(v => ({
+    ...v,
+    relevance: user.interests[v.cat] * 0.65
+             + v.cr * 0.20
+             + Math.random() * 0.15,
+  }));
+
+  // Agrupa por categoria e pega os melhores de cada uma
+  const byCategory = {};
+  for (const v of scored) {
+    if (!byCategory[v.cat]) byCategory[v.cat] = [];
+    byCategory[v.cat].push(v);
+  }
+
+  // Ordena dentro de cada categoria e pega até 2 por categoria
+  const MAX_PER_CAT = 2;
+  const candidates = [];
+  for (const cat of Object.keys(byCategory)) {
+    byCategory[cat]
+      .sort((a, b) => b.relevance - a.relevance)
+      .slice(0, MAX_PER_CAT)
+      .forEach(v => candidates.push(v));
+  }
+
+  // Ordena o conjunto final por relevância e limita a 10
+  return candidates
     .sort((a, b) => b.relevance - a.relevance)
     .slice(0, 10);
 }
